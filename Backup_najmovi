@@ -1,0 +1,636 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 14.1
+-- Dumped by pg_dump version 14.1
+
+-- Started on 2022-01-17 00:03:30
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2 (class 3079 OID 16553)
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- TOC entry 3384 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- TOC entry 242 (class 1255 OID 16580)
+-- Name: Funkcija_json_zbroj_rezija(json); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public."Funkcija_json_zbroj_rezija"(json_podaci json) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$DECLARE
+suma_struja integer;
+suma_plin integer;
+suma_ukupno integer;
+BEGIN
+SELECT 
+json_podaci -> 'rezije' ->> 'struja' AS INTEGER
+INTO suma_struja
+FROM json_podaci;
+SELECT 
+json_podaci -> 'rezije' ->> 'plin' AS INTEGER
+INTO suma_plin
+FROM json_podaci;
+suma_ukupno=suma_struja+suma_plin;
+return suma_ukupno;
+END$$;
+
+
+ALTER FUNCTION public."Funkcija_json_zbroj_rezija"(json_podaci json) OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1255 OID 16593)
+-- Name: dodavanje_objekta(character varying, character varying, integer, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.dodavanje_objekta(adresa character varying, postanski_broj character varying, vrsta_objekta integer, vlasnik uuid) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+id_objekta uuid;
+BEGIN
+id_objekta=uuid_generate_v4();
+INSERT INTO objekt values(id_objekta, adresa, postanski_broj,vrsta_objekta, CAST (vlasnik as uuid));
+return id_objekta;
+END
+$$;
+
+
+ALTER FUNCTION public.dodavanje_objekta(adresa character varying, postanski_broj character varying, vrsta_objekta integer, vlasnik uuid) OWNER TO postgres;
+
+--
+-- TOC entry 241 (class 1255 OID 16588)
+-- Name: test(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.test(x integer, y integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$DECLARE
+suma integer;
+BEGIN
+return x+y;
+END$$;
+
+
+ALTER FUNCTION public.test(x integer, y integer) OWNER TO postgres;
+
+--
+-- TOC entry 243 (class 1255 OID 16589)
+-- Name: test_json(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.test_json() RETURNS integer
+    LANGUAGE plpgsql
+    AS $$DECLARE
+suma_struja integer;
+suma_plin integer;
+suma_ukupno integer;
+BEGIN
+SELECT 
+podaci -> 'rezije' ->> 'struja' AS INTEGER
+INTO suma_struja
+FROM rezije;
+SELECT 
+podaci -> 'rezije' ->> 'plin' AS INTEGER
+INTO suma_plin
+FROM rezije;
+suma_ukupno=suma_struja+suma_plin;
+return suma_ukupno;
+END$$;
+
+
+ALTER FUNCTION public.test_json() OWNER TO postgres;
+
+--
+-- TOC entry 244 (class 1255 OID 16590)
+-- Name: test_json2(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.test_json2(id_rezija integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$DECLARE
+suma_struja integer;
+suma_plin integer;
+suma_ukupno integer;
+BEGIN
+SELECT 
+podaci -> 'rezije' ->> 'struja' AS INTEGER
+INTO suma_struja
+FROM rezije where id_rezije=id_rezija;
+SELECT 
+podaci -> 'rezije' ->> 'plin' AS INTEGER
+INTO suma_plin
+FROM rezije where id_rezije=id_rezija;
+suma_ukupno=suma_struja+suma_plin;
+return suma_ukupno;
+END$$;
+
+
+ALTER FUNCTION public.test_json2(id_rezija integer) OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 210 (class 1259 OID 16472)
+-- Name: korisnik; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.korisnik (
+    id_korisnik uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    ime_prezime character varying NOT NULL,
+    datum_rodenja date NOT NULL,
+    mobitel character varying NOT NULL,
+    email character varying NOT NULL,
+    lozinka character varying NOT NULL
+);
+
+
+ALTER TABLE public.korisnik OWNER TO postgres;
+
+--
+-- TOC entry 212 (class 1259 OID 16480)
+-- Name: notifikacije; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.notifikacije (
+    id_notifikacije integer NOT NULL,
+    korisnik uuid NOT NULL,
+    opis character varying NOT NULL,
+    procitano boolean NOT NULL
+);
+
+
+ALTER TABLE public.notifikacije OWNER TO postgres;
+
+--
+-- TOC entry 211 (class 1259 OID 16479)
+-- Name: notifikacije_id_notifikacije_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.notifikacije_id_notifikacije_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.notifikacije_id_notifikacije_seq OWNER TO postgres;
+
+--
+-- TOC entry 3385 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: notifikacije_id_notifikacije_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.notifikacije_id_notifikacije_seq OWNED BY public.notifikacije.id_notifikacije;
+
+
+--
+-- TOC entry 214 (class 1259 OID 16494)
+-- Name: objekt; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.objekt (
+    id_objekt uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    adresa character varying NOT NULL,
+    postanski_broj character varying NOT NULL,
+    vrsta_objekta integer NOT NULL,
+    vlasnik uuid NOT NULL
+);
+
+
+ALTER TABLE public.objekt OWNER TO postgres;
+
+--
+-- TOC entry 213 (class 1259 OID 16493)
+-- Name: objekt_vrsta_objekta_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.objekt_vrsta_objekta_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.objekt_vrsta_objekta_seq OWNER TO postgres;
+
+--
+-- TOC entry 3386 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: objekt_vrsta_objekta_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.objekt_vrsta_objekta_seq OWNED BY public.objekt.vrsta_objekta;
+
+
+--
+-- TOC entry 219 (class 1259 OID 16540)
+-- Name: rezije; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rezije (
+    id_rezije integer NOT NULL,
+    podaci json NOT NULL,
+    id_ugovor uuid NOT NULL
+);
+
+
+ALTER TABLE public.rezije OWNER TO postgres;
+
+--
+-- TOC entry 218 (class 1259 OID 16539)
+-- Name: rezije_id_rezije_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.rezije_id_rezije_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.rezije_id_rezije_seq OWNER TO postgres;
+
+--
+-- TOC entry 3387 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: rezije_id_rezije_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.rezije_id_rezije_seq OWNED BY public.rezije.id_rezije;
+
+
+--
+-- TOC entry 217 (class 1259 OID 16522)
+-- Name: ugovor; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ugovor (
+    id_ugovor uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    najmoprimac uuid,
+    objekt uuid NOT NULL,
+    datum_pocetka date,
+    datum_kraja date,
+    cijena numeric NOT NULL
+);
+
+
+ALTER TABLE public.ugovor OWNER TO postgres;
+
+--
+-- TOC entry 216 (class 1259 OID 16508)
+-- Name: vrsta_objekta; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vrsta_objekta (
+    id_vrsta_objekta integer NOT NULL,
+    naziv character varying NOT NULL
+);
+
+
+ALTER TABLE public.vrsta_objekta OWNER TO postgres;
+
+--
+-- TOC entry 215 (class 1259 OID 16507)
+-- Name: vrsta_objekta_id_vrsta_objekta_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.vrsta_objekta_id_vrsta_objekta_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.vrsta_objekta_id_vrsta_objekta_seq OWNER TO postgres;
+
+--
+-- TOC entry 3388 (class 0 OID 0)
+-- Dependencies: 215
+-- Name: vrsta_objekta_id_vrsta_objekta_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.vrsta_objekta_id_vrsta_objekta_seq OWNED BY public.vrsta_objekta.id_vrsta_objekta;
+
+
+--
+-- TOC entry 3204 (class 2604 OID 16483)
+-- Name: notifikacije id_notifikacije; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifikacije ALTER COLUMN id_notifikacije SET DEFAULT nextval('public.notifikacije_id_notifikacije_seq'::regclass);
+
+
+--
+-- TOC entry 3205 (class 2604 OID 16514)
+-- Name: objekt vrsta_objekta; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.objekt ALTER COLUMN vrsta_objekta SET DEFAULT nextval('public.objekt_vrsta_objekta_seq'::regclass);
+
+
+--
+-- TOC entry 3209 (class 2604 OID 16543)
+-- Name: rezije id_rezije; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rezije ALTER COLUMN id_rezije SET DEFAULT nextval('public.rezije_id_rezije_seq'::regclass);
+
+
+--
+-- TOC entry 3207 (class 2604 OID 16511)
+-- Name: vrsta_objekta id_vrsta_objekta; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vrsta_objekta ALTER COLUMN id_vrsta_objekta SET DEFAULT nextval('public.vrsta_objekta_id_vrsta_objekta_seq'::regclass);
+
+
+--
+-- TOC entry 3369 (class 0 OID 16472)
+-- Dependencies: 210
+-- Data for Name: korisnik; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.korisnik (id_korisnik, ime_prezime, datum_rodenja, mobitel, email, lozinka) FROM stdin;
+15b22bd6-dfda-4bc6-a489-8284e402326b	ivan_blazek	1998-09-04	0989069111	iblazek@foi.hr	S12345678
+069c2e4f-ccbb-4165-9f09-abe74944c933	antonio_kunstek	1998-05-01	0989069222	akunstek@foi.hr	12345678
+4ec31f40-dee6-4e82-a596-4360cd47ef5b	marko_fruk	2022-01-04	0981724582	asdasd@gmail.com	12345678
+2cbace59-759b-4132-ad7d-61d53513835c	helena_potocki	2022-01-10	098172458212	hpotocki@foi.hr	12345678
+72357bd5-45e1-4285-8637-17806a5ecd2f	marijan_šteko	1998-01-15	0989069122	msteko@foi.hr	12345678
+\.
+
+
+--
+-- TOC entry 3371 (class 0 OID 16480)
+-- Dependencies: 212
+-- Data for Name: notifikacije; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.notifikacije (id_notifikacije, korisnik, opis, procitano) FROM stdin;
+\.
+
+
+--
+-- TOC entry 3373 (class 0 OID 16494)
+-- Dependencies: 214
+-- Data for Name: objekt; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.objekt (id_objekt, adresa, postanski_broj, vrsta_objekta, vlasnik) FROM stdin;
+f6c89746-c1f1-46f3-82c3-691c2f40628a	Srijemska 7	32236	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+ae919104-0f4b-4f8b-8b02-ea46fa173f83	test 1	12131	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+987ed19c-7bd7-45dc-a881-1d90e71b7c3f	test 1	12131	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+fcdda5a8-bfc2-428d-bca4-773230b899be	test 2	12131	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+2b2ede38-7159-4e55-bfe9-ea7bb0d7eea6	test 3	12131	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+31aeba3d-8b16-4e56-8ebe-8fe94fb3181e	test 4	12131	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+63179375-8397-4520-9bc0-ea21bb3ea06e	test 5	42000	4	069c2e4f-ccbb-4165-9f09-abe74944c933
+b74bad4e-5059-415e-bbb6-262fec8503b1	test 5	42000	4	069c2e4f-ccbb-4165-9f09-abe74944c933
+7d9c5f9d-6a0a-4eee-a045-09a30fcb6baf	Vukovarska 34	42000	4	069c2e4f-ccbb-4165-9f09-abe74944c933
+6959c7e1-ae24-4c8f-b405-b3b0d46a3653	Zagrebačka 7	42000	1	069c2e4f-ccbb-4165-9f09-abe74944c933
+02ae8e16-d224-4a5a-9f51-3969999cd5c8	Makarska 12	20000	2	069c2e4f-ccbb-4165-9f09-abe74944c933
+0b9ef674-e8f3-4851-a2f6-305bb27334e4	Krapina 7	49000	4	069c2e4f-ccbb-4165-9f09-abe74944c933
+95121de3-bb32-4efd-a254-2fcb461b96e0	Zagrebačka 21	42000	2	72357bd5-45e1-4285-8637-17806a5ecd2f
+b8fae678-b84b-45cd-805d-1ee5474a9d47	Vukovarska 34	42000	4	15b22bd6-dfda-4bc6-a489-8284e402326b
+\.
+
+
+--
+-- TOC entry 3378 (class 0 OID 16540)
+-- Dependencies: 219
+-- Data for Name: rezije; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.rezije (id_rezije, podaci, id_ugovor) FROM stdin;
+7	{"datum":"2022-01-16","rezije":{"struja":"100","plin":"100","voda":"100","internet":"200"}}	144fa02a-a30d-4e49-8adf-05a24fc2416d
+12	{"datum":"2022-01-16","rezije":{"struja":"200","plin":"100","voda":"100","internet":"100"}}	144fa02a-a30d-4e49-8adf-05a24fc2416d
+13	{"datum":"2022-01-16","rezije":{"struja":"100","plin":"400","voda":"200","internet":"200"}}	b0443cb8-28cf-4dfc-a259-a379da5f15c4
+14	{"datum":"2022-01-16","rezije":{"struja":"500","plin":"210","voda":"60","internet":"100"}}	60922706-4998-4b13-a366-8dc1a2a9f8d8
+\.
+
+
+--
+-- TOC entry 3376 (class 0 OID 16522)
+-- Dependencies: 217
+-- Data for Name: ugovor; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.ugovor (id_ugovor, najmoprimac, objekt, datum_pocetka, datum_kraja, cijena) FROM stdin;
+b0443cb8-28cf-4dfc-a259-a379da5f15c4	069c2e4f-ccbb-4165-9f09-abe74944c933	f6c89746-c1f1-46f3-82c3-691c2f40628a	2021-05-03	2022-03-06	600
+d9c15a24-0d69-4d83-beab-14223e339e9b	069c2e4f-ccbb-4165-9f09-abe74944c933	b74bad4e-5059-415e-bbb6-262fec8503b1	2022-01-15	2022-11-02	3500
+e283a2ee-42bf-472b-8ba4-88df85db3ec6	\N	6959c7e1-ae24-4c8f-b405-b3b0d46a3653	\N	\N	1300
+5f873ea2-efe0-45f1-a054-bbb1d89add91	\N	02ae8e16-d224-4a5a-9f51-3969999cd5c8	\N	\N	23000
+d5fda543-5a97-4a2d-b77d-5a93d33a82df	\N	0b9ef674-e8f3-4851-a2f6-305bb27334e4	\N	\N	10
+144fa02a-a30d-4e49-8adf-05a24fc2416d	72357bd5-45e1-4285-8637-17806a5ecd2f	7d9c5f9d-6a0a-4eee-a045-09a30fcb6baf	2022-01-16	2022-11-03	1400
+15d78591-6d8e-4656-b726-cbbbfe7ff17c	\N	b8fae678-b84b-45cd-805d-1ee5474a9d47	\N	\N	1400
+60922706-4998-4b13-a366-8dc1a2a9f8d8	15b22bd6-dfda-4bc6-a489-8284e402326b	95121de3-bb32-4efd-a254-2fcb461b96e0	2022-01-16	2022-11-03	3000
+\.
+
+
+--
+-- TOC entry 3375 (class 0 OID 16508)
+-- Dependencies: 216
+-- Data for Name: vrsta_objekta; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.vrsta_objekta (id_vrsta_objekta, naziv) FROM stdin;
+1	stan
+2	kuca
+3	apartman
+4	soba
+\.
+
+
+--
+-- TOC entry 3389 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: notifikacije_id_notifikacije_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.notifikacije_id_notifikacije_seq', 1, false);
+
+
+--
+-- TOC entry 3390 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: objekt_vrsta_objekta_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.objekt_vrsta_objekta_seq', 1, false);
+
+
+--
+-- TOC entry 3391 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: rezije_id_rezije_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.rezije_id_rezije_seq', 14, true);
+
+
+--
+-- TOC entry 3392 (class 0 OID 0)
+-- Dependencies: 215
+-- Name: vrsta_objekta_id_vrsta_objekta_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.vrsta_objekta_id_vrsta_objekta_seq', 1, false);
+
+
+--
+-- TOC entry 3211 (class 2606 OID 16568)
+-- Name: korisnik email; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.korisnik
+    ADD CONSTRAINT email UNIQUE (email);
+
+
+--
+-- TOC entry 3213 (class 2606 OID 16478)
+-- Name: korisnik korisnik_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.korisnik
+    ADD CONSTRAINT korisnik_pk PRIMARY KEY (id_korisnik);
+
+
+--
+-- TOC entry 3215 (class 2606 OID 16487)
+-- Name: notifikacije notifikacije_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifikacije
+    ADD CONSTRAINT notifikacije_pk PRIMARY KEY (id_notifikacije);
+
+
+--
+-- TOC entry 3217 (class 2606 OID 16501)
+-- Name: objekt objekt_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.objekt
+    ADD CONSTRAINT objekt_pk PRIMARY KEY (id_objekt);
+
+
+--
+-- TOC entry 3223 (class 2606 OID 16547)
+-- Name: rezije rezije_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rezije
+    ADD CONSTRAINT rezije_pk PRIMARY KEY (id_rezije);
+
+
+--
+-- TOC entry 3221 (class 2606 OID 16528)
+-- Name: ugovor ugovor_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ugovor
+    ADD CONSTRAINT ugovor_pk PRIMARY KEY (id_ugovor);
+
+
+--
+-- TOC entry 3219 (class 2606 OID 16516)
+-- Name: vrsta_objekta vrsta_objekta_pk; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vrsta_objekta
+    ADD CONSTRAINT vrsta_objekta_pk PRIMARY KEY (id_vrsta_objekta);
+
+
+--
+-- TOC entry 3224 (class 2606 OID 16488)
+-- Name: notifikacije notifikacije_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifikacije
+    ADD CONSTRAINT notifikacije_fk FOREIGN KEY (korisnik) REFERENCES public.korisnik(id_korisnik);
+
+
+--
+-- TOC entry 3225 (class 2606 OID 16502)
+-- Name: objekt objekt_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.objekt
+    ADD CONSTRAINT objekt_fk FOREIGN KEY (vlasnik) REFERENCES public.korisnik(id_korisnik);
+
+
+--
+-- TOC entry 3226 (class 2606 OID 16517)
+-- Name: objekt objekt_fk2; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.objekt
+    ADD CONSTRAINT objekt_fk2 FOREIGN KEY (vrsta_objekta) REFERENCES public.vrsta_objekta(id_vrsta_objekta);
+
+
+--
+-- TOC entry 3229 (class 2606 OID 16548)
+-- Name: rezije rezije_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rezije
+    ADD CONSTRAINT rezije_fk FOREIGN KEY (id_ugovor) REFERENCES public.ugovor(id_ugovor);
+
+
+--
+-- TOC entry 3227 (class 2606 OID 16529)
+-- Name: ugovor ugovor_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ugovor
+    ADD CONSTRAINT ugovor_fk FOREIGN KEY (objekt) REFERENCES public.objekt(id_objekt);
+
+
+--
+-- TOC entry 3228 (class 2606 OID 16534)
+-- Name: ugovor ugovor_fk_1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ugovor
+    ADD CONSTRAINT ugovor_fk_1 FOREIGN KEY (najmoprimac) REFERENCES public.korisnik(id_korisnik);
+
+
+-- Completed on 2022-01-17 00:03:32
+
+--
+-- PostgreSQL database dump complete
+--
+
