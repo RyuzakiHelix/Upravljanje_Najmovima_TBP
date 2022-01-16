@@ -4,3 +4,4 @@ Aplikacija za upravljanje najmovima (ugovori, karakteristike ugovora, najmodavci
 Setup:
 Aplikacija se pokreće tako da u terminalu napišete komandu npm start.
 Preporučeno otvoriti u Visual code.
+Backup_najmovi- backup baze u čistom text obliku izrđen u pgAdmin4
