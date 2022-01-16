@@ -7,7 +7,8 @@ import {
   Button,
   Modal,
   Form,
-  FormLabel,
+  Alert,
+  ListGroup,
 } from "react-bootstrap";
 import Cookies from "universal-cookie";
 import { useNavigate } from "react-router-dom";
@@ -19,30 +20,15 @@ function Profil() {
   const [loading, isLoading] = useState(true);
   const [dugovanja, setDugovanja] = useState();
   const [najmovi, setNajmovi] = useState();
-  const [isModalOpened, setIsModalOpened] = useState(false);
+  const [currentObject, setCurrentObject] = useState();
 
-  const handleNew = async (e) => {
-    e.preventDefault();
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
-    const podaci = await fetch("http://localhost:3001/rezije", {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: cookies.get("access_token"),
-      },
-      body: {
-        rezije: {
-          // Trebat će dodavat nova polja na modal.
-        },
-        vertrag: {
-          // Trebat će hvatat UUID za odabrani ugovor.
-          // E da, vertrag znači ugovor. Ni ja nisam znao -_o_-
-          // E da, ovo gore, ovaj abomination, to je onaj lik s ramenima
-        },
-      },
-    });
-  };
+  const [show2, setShow2] = useState(false);
+  const handleClose2 = () => setShow2(false);
+  const handleShow2 = () => setShow2(true);
 
   const navigate = useNavigate();
   const cookies = new Cookies();
@@ -90,6 +76,103 @@ function Profil() {
         break;
     }
   }
+  const openUnosRezije = (id_objekt) => {
+    handleShow();
+    setCurrentObject(id_objekt);
+  };
+
+  const AddRezije = () => {
+    const [struja, setStruja] = useState();
+    const [plin, setPlin] = useState();
+    const [voda, setVoda] = useState();
+    const [internet, setInternet] = useState();
+
+    const [error, setError] = useState("");
+
+    const submitRezije = async () => {
+      if (
+        struja !== undefined &&
+        plin !== undefined &&
+        voda !== undefined &&
+        internet !== undefined
+      ) {
+        const serverResponse = await fetch("http://localhost:3001/rezije", {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            access_token: cookies.get("access_token"),
+          },
+          body: JSON.stringify({
+            idObjekta: currentObject,
+            rezije: {
+              struja,
+              plin,
+              voda,
+              internet,
+            },
+          }),
+        });
+        switch (serverResponse.status) {
+          case 200:
+            handleClose();
+            setStruja(0);
+            setPlin(0);
+            setInternet(0);
+            setVoda(0);
+            setError("");
+            break;
+          default:
+            setError("Greska servera!");
+            break;
+        }
+      } else {
+        setError("Molim Vas unesite sve podatke!");
+      }
+    };
+    return (
+      <Form>
+        {error !== "" ? <Alert variant="danger">{error}</Alert> : <></>}
+        <Form.Group className="mb-3" controlId="formBasicStruja">
+          <Form.Label>Unesite iznos struje:</Form.Label>
+          <Form.Control
+            onChange={(e) => setStruja(e.target.value)}
+            type="number"
+            placeholder="Unesite iznos rezija..."
+          />
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="formBasicInternet">
+          <Form.Label>Unesite iznos interneta:</Form.Label>
+          <Form.Control
+            onChange={(e) => setInternet(e.target.value)}
+            type="number"
+            placeholder="Unesite iznos rezija..."
+          />
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="formBasicPlin">
+          <Form.Label>Unesite iznos plina:</Form.Label>
+          <Form.Control
+            onChange={(e) => setPlin(e.target.value)}
+            type="number"
+            placeholder="Unesite iznos rezija..."
+          />
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="formBasicVoda">
+          <Form.Label>Unesite iznos vode:</Form.Label>
+          <Form.Control
+            onChange={(e) => setVoda(e.target.value)}
+            type="number"
+            placeholder="Unesite iznos rezija..."
+          />
+        </Form.Group>
+        <Container className="d-flex justify-content-start align-items-center">
+          <Button variant="primary" onClick={() => submitRezije()}>
+            Submit
+          </Button>
+        </Container>
+      </Form>
+    );
+  };
   const ProfilComponent = () => {
     return (
       <Card>
@@ -105,6 +188,78 @@ function Profil() {
         </Card.Body>
       </Card>
     );
+  };
+
+  const PrikazRezija = () => {
+    const [allRezije, setAllRezije] = useState([]);
+    const getRezijeForObject = async () => {
+      const serverResponse = await fetch(
+        "http://localhost:3001/dohvati/rezije",
+        {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            access_token: cookies.get("access_token"),
+          },
+          body: JSON.stringify({
+            id_ugovor: currentObject,
+          }),
+        }
+      );
+      switch (serverResponse.status) {
+        case 200:
+          const allRezije2 = await serverResponse.json();
+          setAllRezije(allRezije2);
+          break;
+        default:
+          break;
+      }
+    };
+
+    useEffect(() => {
+      getRezijeForObject();
+    }, []);
+
+    return (
+      <>
+        {allRezije.length !== 0 ? (
+          allRezije.map((rezija, index) => {
+            return (
+              <>
+                <Card key={index} style={{ width: "18rem" }}>
+                  <Card.Header>{rezija.podaci.datum}</Card.Header>
+                  <ListGroup variant="flush">
+                    <ListGroup.Item>
+                      {"Struja iznosi: " + rezija.podaci.rezije.struja + " HRK"}
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      {"Internet iznosi: " +
+                        rezija.podaci.rezije.internet +
+                        " HRK"}
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      {"Voda iznosi: " + rezija.podaci.rezije.voda + " HRK"}
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      {"Plin iznosi: " + rezija.podaci.rezije.plin + " HRK"}
+                    </ListGroup.Item>
+                  </ListGroup>
+                </Card>
+                <hr></hr>
+              </>
+            );
+          })
+        ) : (
+          <Alert variant="success">Ne postoje dugovanja za ovaj objekt!</Alert>
+        )}
+      </>
+    );
+  };
+
+  const openRezije = (id_objekt) => {
+    setCurrentObject(id_objekt);
+    handleShow2();
   };
 
   const DugovanjaComponent = () => {
@@ -124,7 +279,7 @@ function Profil() {
         <tbody>
           {dugovanja.map((dug, index) => {
             return (
-              <tr key={index}>
+              <tr key={index} onClick={() => openRezije(dug.id_ugovor)}>
                 <td>{index + 1}</td>
                 <td>{dug.adresa}</td>
                 <td>{dug.postanski_broj}</td>
@@ -176,7 +331,7 @@ function Profil() {
                   <td>{dug.email}</td>
                   <td>{dug.cijena}</td>
                   <td>
-                    <Button onClick={() => setIsModalOpened((value) => !value)}>
+                    <Button onClick={() => openUnosRezije(dug.id_ugovor)}>
                       Unos režija
                     </Button>
                   </td>
@@ -185,30 +340,6 @@ function Profil() {
             })}
           </tbody>
         </Table>
-        <Modal
-          show={isModalOpened}
-          onHide={() => setIsModalOpened((value) => !value)}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Unos režija</Modal.Title>
-          </Modal.Header>
-
-          <Modal.Body>
-            <Form onSubmit={handleNew}>
-              <Form.Group className="mb-3" controlId="formBasicEmail">
-                <Form.Label>Unos iznosa:</Form.Label>
-                <Form.Control type="number" placeholder="3123" />
-              </Form.Group>
-              <Button variant="primary" type="submit">
-                Submit
-              </Button>
-            </Form>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button variant="primary">Save changes</Button>
-          </Modal.Footer>
-        </Modal>
       </>
     );
   };
@@ -254,13 +385,41 @@ function Profil() {
             ) : odabir === 1 ? (
               <DugovanjaComponent />
             ) : (
-              <IzdaniUgovoriComponent />
+              <>
+                <IzdaniUgovoriComponent />
+              </>
             )}
           </Container>
         </Container>
       ) : (
         <div>Loading...</div>
       )}
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Unos rezija: </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <AddRezije />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Odustani
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={show2} onHide={handleClose2}>
+        <Modal.Header closeButton>
+          <Modal.Title>Prikaz rezija </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <PrikazRezija />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose2}>
+            Odustani
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
