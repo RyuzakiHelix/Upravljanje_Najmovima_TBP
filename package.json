@@ -4,7 +4,9 @@
   "description": "Aplikacija za upravljanje najmovima (ugovori, karakteristike ugovora, najmodavci, najmoprimci, podsjetnici, održavanje, režije itd.) - aktivne+temporalne+polustrukturirane baze podataka (PostgreSQL uz integrirani tip podataka XML ili JSON te funkcije za rad s tim formatima) + grafičko sučelje po želji.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"cd client && npm install && npm start\" \"cd server && npm install && node server.js\""
+
   },
   "repository": {
     "type": "git",
@@ -20,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/RyuzakiHelix/Upravljanje_Najmovima_TBP/issues"
   },
-  "homepage": "https://github.com/RyuzakiHelix/Upravljanje_Najmovima_TBP#readme"
+  "homepage": "https://github.com/RyuzakiHelix/Upravljanje_Najmovima_TBP#readme",
+  "dependencies": {
+    "concurrently": "^7.0.0"
+  }
 }
